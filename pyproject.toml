@@ -1,0 +1,22 @@
+[project]
+name = "flaky-tests-detective"
+version = "0.1.0"
+description = "Detect and fix flaky pytest tests"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = []
+
+[build-system]
+requires = ["uv_build>=0.11.0,<0.12.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "detective"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.1.1",
+    "ruff>=0.15.22",
+    "ty>=0.0.60",
+]
