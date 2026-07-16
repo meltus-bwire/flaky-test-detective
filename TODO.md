@@ -63,7 +63,7 @@ task = one coherent outcome. Check the box and note the commit when done.
 
 ## Bugs / Follow-ups
 
-- [ ] (add as discovered)
+- [x] Guard cause-specific patch strategies when source evidence is insufficient.
 
 ## Explicitly NOT doing (see DESIGN.md "Out of Scope")
 

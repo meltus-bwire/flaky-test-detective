@@ -89,6 +89,8 @@ def _add_race_wait(source: str) -> str:
 
 
 def _add_time_fixture(source: str) -> str:
+    if "datetime" not in source:
+        raise ValueError("time strategy requires a datetime reference in source")
     pytest_import = "" if "import pytest" in source else "import pytest\n\n"
     fixture = (
         "\n\nclass _FixedDateTime(datetime):\n"
