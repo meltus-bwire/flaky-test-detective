@@ -16,6 +16,9 @@ build-backend = "uv_build"
 [tool.uv.build-backend]
 module-name = "detective"
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
