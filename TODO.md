@@ -57,10 +57,9 @@ task = one coherent outcome. Check the box and note the commit when done.
 
 - [x] M4-001 `classify/llm_analyzer.py`: LLM fallback for UNKNOWN, structured verdict
       with validation
-- [ ] M4-001 Pretty terminal output: live rerun progress, failure-rate table, diff view
-- [ ] M4-001 Rehearsed demo script in README: trigger red CI on fixture repo →
-      run detective → show green PR
-- [ ] M4-001 3-minute pitch notes: problem, arc, what's real vs. mocked
+- [x] M4-002 Pretty terminal output: live rerun progress, failure-rate table, diff view
+- [x] M4-003 Update README.md with overview, setup, architecture, Tech Stack. The readme is the
+      documentation people read to understand the project
 
 ## Bugs / Follow-ups
 
