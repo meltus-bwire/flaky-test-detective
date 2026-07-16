@@ -34,3 +34,12 @@ def test_scheduling_jitter_installs_a_thread_trace_shim(tmp_path: Path) -> None:
 
     assert "threading.settrace(_jitter)" in shim
     assert "time.sleep(0.01)" in shim
+
+
+def test_clock_freeze_installs_a_frozen_datetime_shim(tmp_path: Path) -> None:
+    prepare(Perturbation.CLOCK_FREEZE, tmp_path)
+
+    shim = (tmp_path / "sitecustomize.py").read_text()
+
+    assert "class _FrozenDateTime(_datetime.datetime):" in shim
+    assert "return cls(2026, 1, 1, 0, 0, tzinfo=tz)" in shim

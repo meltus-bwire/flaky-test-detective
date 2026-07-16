@@ -74,7 +74,10 @@ def _command(perturbation: Perturbation, test_id: str, seed: int | None) -> list
 
 
 def _environment(perturbation: Perturbation, repo_dir: Path) -> dict[str, str] | None:
-    if perturbation is not Perturbation.SCHEDULING_JITTER:
+    if perturbation not in {
+        Perturbation.SCHEDULING_JITTER,
+        Perturbation.CLOCK_FREEZE,
+    }:
         return None
     current_path = os.environ.get("PYTHONPATH", "")
     python_path = str(repo_dir)

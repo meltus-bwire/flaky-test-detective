@@ -21,6 +21,7 @@ def test_reproduce_runs_each_perturbation_in_a_temporary_copy(
             subprocess.CompletedProcess([], 1, "failed", "details"),
             subprocess.CompletedProcess([], 0, "passed", ""),
             subprocess.CompletedProcess([], 1, "", "jitter details"),
+            subprocess.CompletedProcess([], 1, "", "clock details"),
         ]
     )
 
@@ -42,8 +43,13 @@ def test_reproduce_runs_each_perturbation_in_a_temporary_copy(
         "random_order": 1.0,
         "fresh_process": 0.0,
         "scheduling_jitter": 1.0,
+        "clock_freeze": 1.0,
     }
-    assert result.sample_failures == ["failed\ndetails", "jitter details"]
+    assert result.sample_failures == [
+        "failed\ndetails",
+        "jitter details",
+        "clock details",
+    ]
     assert [command for command, _ in calls] == [
         ["uv", "run", "pytest", report.test_id],
         [
@@ -62,6 +68,14 @@ def test_reproduce_runs_each_perturbation_in_a_temporary_copy(
             str(PROJECT_DIR),
             "pytest",
             "--forked",
+            report.test_id,
+        ],
+        [
+            "uv",
+            "run",
+            "--project",
+            str(PROJECT_DIR),
+            "pytest",
             report.test_id,
         ],
         [
