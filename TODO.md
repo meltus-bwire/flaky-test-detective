@@ -28,7 +28,7 @@ task = one coherent outcome. Check the box and note the commit when done.
       order but not otherwise → SHARED_STATE)
 - [x] M1-004 `fix/patcher.py` v1: hardcoded strategy for SHARED_STATE
       (add reset fixture), apply to temp copy, revalidate matrix
-- [ ] M1-005 Wire `detective run --fixture shared` through all stages; print
+- [x] M1-005 Wire `detective run --fixture shared` through all stages; print
       before/after failure-rate table
 - [ ] M1-006 `make demo` runs the above; END-TO-END GREEN ← 🎯 checkpoint: demo-able
 
