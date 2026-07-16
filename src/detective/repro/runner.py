@@ -1,15 +1,18 @@
 """Run suspect tests repeatedly in an isolated copy of a repository."""
 
 from pathlib import Path
+import random
 import shutil
 import subprocess
 from tempfile import TemporaryDirectory
 
 from detective.models import FailureReport, ReproResult
+from detective.repro.perturb import Perturbation, pytest_arguments
 
 
 DEFAULT_RUNS = 20
-BASELINE_PERTURBATION = "baseline"
+PERTURBATIONS = tuple(Perturbation)
+PROJECT_DIR = Path(__file__).parents[3]
 
 
 def reproduce(
@@ -24,20 +27,32 @@ def reproduce(
         shutil.copytree(
             source_dir, repo_dir, ignore=shutil.ignore_patterns(".venv", "__pycache__")
         )
-        failures = _run_repeatedly(report.test_id, repo_dir, runs)
+        matrix: dict[str, float] = {}
+        sample_failures: list[str] = []
+        for perturbation in PERTURBATIONS:
+            failures = _run_repeatedly(report.test_id, repo_dir, runs, perturbation)
+            matrix[perturbation.value] = len(failures) / runs
+            sample_failures.extend(failures)
 
     return ReproResult(
         test_id=report.test_id,
-        matrix={BASELINE_PERTURBATION: len(failures) / runs},
-        sample_failures=failures,
+        matrix=matrix,
+        sample_failures=sample_failures,
     )
 
 
-def _run_repeatedly(test_id: str, repo_dir: Path, runs: int) -> list[str]:
+def _run_repeatedly(
+    test_id: str, repo_dir: Path, runs: int, perturbation: Perturbation
+) -> list[str]:
     failures: list[str] = []
     for _ in range(runs):
+        seed = (
+            random.randrange(2**32)
+            if perturbation is Perturbation.RANDOM_ORDER
+            else None
+        )
         result = subprocess.run(
-            ["uv", "run", "pytest", test_id],
+            _command(perturbation, test_id, seed),
             cwd=repo_dir,
             capture_output=True,
             check=False,
@@ -46,6 +61,13 @@ def _run_repeatedly(test_id: str, repo_dir: Path, runs: int) -> list[str]:
         if result.returncode:
             failures.append(_format_failure(result))
     return failures
+
+
+def _command(perturbation: Perturbation, test_id: str, seed: int | None) -> list[str]:
+    arguments = pytest_arguments(perturbation, test_id, seed)
+    if perturbation is Perturbation.BASELINE:
+        return ["uv", "run", "pytest", *arguments]
+    return ["uv", "run", "--project", str(PROJECT_DIR), "pytest", *arguments]
 
 
 def _format_failure(result: subprocess.CompletedProcess[str]) -> str:

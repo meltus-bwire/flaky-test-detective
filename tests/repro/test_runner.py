@@ -4,10 +4,10 @@ import subprocess
 import pytest
 
 from detective.models import FailureReport
-from detective.repro.runner import BASELINE_PERTURBATION, reproduce
+from detective.repro.runner import PROJECT_DIR, reproduce
 
 
-def test_reproduce_runs_in_a_temporary_copy(
+def test_reproduce_runs_each_perturbation_in_a_temporary_copy(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     source_dir = tmp_path / "fixture"
@@ -19,7 +19,7 @@ def test_reproduce_runs_in_a_temporary_copy(
         [
             subprocess.CompletedProcess([], 0, "passed", ""),
             subprocess.CompletedProcess([], 1, "failed", "details"),
-            subprocess.CompletedProcess([], 1, "", "more details"),
+            subprocess.CompletedProcess([], 0, "passed", ""),
         ]
     )
 
@@ -32,14 +32,37 @@ def test_reproduce_runs_in_a_temporary_copy(
         return next(results)
 
     monkeypatch.setattr("detective.repro.runner.subprocess.run", run)
+    monkeypatch.setattr("detective.repro.runner.random.randrange", lambda _: 7)
 
-    result = reproduce(report, source_dir, runs=3)
+    result = reproduce(report, source_dir, runs=1)
 
-    assert result.matrix == {BASELINE_PERTURBATION: pytest.approx(2 / 3)}
-    assert result.sample_failures == ["failed\ndetails", "more details"]
+    assert result.matrix == {
+        "baseline": 0.0,
+        "random_order": 1.0,
+        "fresh_process": 0.0,
+    }
+    assert result.sample_failures == ["failed\ndetails"]
     assert [command for command, _ in calls] == [
-        ["uv", "run", "pytest", report.test_id]
-    ] * 3
+        ["uv", "run", "pytest", report.test_id],
+        [
+            "uv",
+            "run",
+            "--project",
+            str(PROJECT_DIR),
+            "pytest",
+            "--randomly-seed=7",
+            "test_example.py",
+        ],
+        [
+            "uv",
+            "run",
+            "--project",
+            str(PROJECT_DIR),
+            "pytest",
+            "--forked",
+            report.test_id,
+        ],
+    ]
 
 
 def test_reproduce_rejects_non_positive_run_counts(tmp_path: Path) -> None:

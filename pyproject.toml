@@ -23,6 +23,8 @@ testpaths = ["tests"]
 dev = [
     "httpx>=0.28.1",
     "pytest>=9.1.1",
+    "pytest-forked>=1.6.0",
+    "pytest-randomly>=4.1.0",
     "ruff>=0.15.22",
     "ty>=0.0.60",
 ]
