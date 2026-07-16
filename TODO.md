@@ -10,7 +10,7 @@ task = one coherent outcome. Check the box and note the commit when done.
 - [x] M0-002 Create `src/detective/models.py` with dataclasses:
       `FailureReport`, `ReproResult`, `Diagnosis`, `FixProposal`, `Cause` enum
       (see DESIGN.md for fields)
-- [ ] M0-003 Create `src/detective/cli.py` with argparse entry point and
+- [x] M0-003 Create `src/detective/cli.py` with argparse entry point and
       `[project.scripts] detective = "detective.cli:main"`;
       stub subcommands: `ingest`, `repro`, `diagnose`, `fix`, `run`
 - [ ] M0-004 Makefile with targets: `demo`, `test`, `lint`, `check`
