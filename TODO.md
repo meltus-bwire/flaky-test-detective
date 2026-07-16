@@ -13,7 +13,7 @@ task = one coherent outcome. Check the box and note the commit when done.
 - [x] M0-003 Create `src/detective/cli.py` with argparse entry point and
       `[project.scripts] detective = "detective.cli:main"`;
       stub subcommands: `ingest`, `repro`, `diagnose`, `fix`, `run`
-- [ ] M0-004 Makefile with targets: `demo`, `test`, `lint`, `check`
+- [x] M0-004 Makefile with targets: `demo`, `test`, `lint`, `check`
 - [ ] M0-005 Build `fixtures/flaky-repo/`: minimal pytest project with
       `test_race.py`, `test_time.py`, `test_shared.py` (planted flakes per
       DESIGN.md), plus its own tiny `pyproject.toml`
