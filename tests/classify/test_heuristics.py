@@ -34,3 +34,33 @@ def test_classify_leaves_ambiguous_matrices_unknown(matrix: dict[str, float]) ->
 
     assert diagnosis.cause is Cause.UNKNOWN
     assert diagnosis.confidence == 0.0
+
+
+def test_classify_identifies_time_dependency_from_clock_and_source() -> None:
+    result = ReproResult(
+        "test_time.py::test_report",
+        {"baseline": 0.0, "clock_freeze": 1.0},
+        [],
+    )
+    source = "from datetime import datetime\nassert datetime.now().hour != 0\n"
+
+    diagnosis = classify(result, source)
+
+    assert diagnosis.cause is Cause.TIME_DEPENDENCY
+    assert diagnosis.suspect_lines == [2]
+
+
+def test_classify_identifies_race_from_jitter_and_thread_signal() -> None:
+    result = ReproResult(
+        "test_race.py::test_worker",
+        {"baseline": 0.0, "scheduling_jitter": 1.0},
+        [],
+    )
+    source = (
+        "from threading import Thread\nworker = Thread(target=work)\nassert result\n"
+    )
+
+    diagnosis = classify(result, source)
+
+    assert diagnosis.cause is Cause.RACE_CONDITION
+    assert diagnosis.suspect_lines == [1, 2]
