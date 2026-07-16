@@ -45,7 +45,7 @@ task = one coherent outcome. Check the box and note the commit when done.
 
 ## Milestone 3 — Real CI in, real PR out
 
-- [ ] M3-001 `ingest/github_actions.py`: fetch latest failed workflow run + logs for
+- [x] M3-001 `ingest/github_actions.py`: fetch latest failed workflow run + logs for
       a repo via httpx (`GITHUB_TOKEN` env var)
 - [ ] M3-002 `ingest/junit_parser.py`: parse JUnit XML → `FailureReport`
 - [ ] M3-003 `pr/github_pr.py`: create branch, commit validated diff, open PR with
