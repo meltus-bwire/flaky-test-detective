@@ -15,6 +15,7 @@ from detective.repro.perturb import Perturbation, prepare, pytest_arguments
 DEFAULT_RUNS = 20
 PERTURBATIONS = tuple(Perturbation)
 PROJECT_DIR = Path(__file__).parents[3]
+RUN_TIMEOUT = 60.0
 
 
 def reproduce(
@@ -63,26 +64,33 @@ def _run_repeatedly(
             if perturbation is Perturbation.RANDOM_ORDER
             else None
         )
-        result = subprocess.run(
-            _command(perturbation, test_id, seed),
-            cwd=repo_dir,
-            capture_output=True,
-            check=False,
-            env=_environment(perturbation, repo_dir),
-            text=True,
-        )
-        if result.returncode:
-            failures.append(_format_failure(result))
+        try:
+            result = subprocess.run(
+                _command(perturbation, test_id, seed, repo_dir),
+                cwd=repo_dir,
+                capture_output=True,
+                check=False,
+                env=_environment(perturbation, repo_dir),
+                timeout=RUN_TIMEOUT,
+                text=True,
+            )
+            if result.returncode:
+                failures.append(_format_failure(result))
+        except subprocess.TimeoutExpired:
+            failures.append(f"pytest timed out after {RUN_TIMEOUT:.0f}s")
         if progress is not None:
             progress(perturbation.value, completed, runs)
     return failures
 
 
-def _command(perturbation: Perturbation, test_id: str, seed: int | None) -> list[str]:
+def _command(
+    perturbation: Perturbation, test_id: str, seed: int | None, repo_dir: Path
+) -> list[str]:
     arguments = pytest_arguments(perturbation, test_id, seed)
     if perturbation is Perturbation.BASELINE:
         return ["uv", "run", "pytest", *arguments]
-    return ["uv", "run", "--project", str(PROJECT_DIR), "pytest", *arguments]
+    project = "." if (repo_dir / "pyproject.toml").exists() else str(PROJECT_DIR)
+    return ["uv", "run", "--project", project, "pytest", *arguments]
 
 
 def _environment(perturbation: Perturbation, repo_dir: Path) -> dict[str, str] | None:

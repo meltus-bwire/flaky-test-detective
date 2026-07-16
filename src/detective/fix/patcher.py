@@ -5,6 +5,7 @@ from pathlib import Path
 import shutil
 from tempfile import TemporaryDirectory
 from collections.abc import Callable
+import re
 
 from detective.models import Cause, Diagnosis, FailureReport, FixProposal
 from detective.repro.runner import DEFAULT_RUNS, reproduce
@@ -49,11 +50,17 @@ def propose_fix(
 
 
 def _add_reset_fixture(source: str) -> str:
+    match = re.search(r"(\w+)\.clear\(\)", source)
+    if not match:
+        match = re.search(r"(\w+)\s*:\s*list(?:\[|\s*=)", source)
+    if not match:
+        raise ValueError("shared-state strategy requires a mutable state .clear() call")
+    state_name = match.group(1)
     pytest_import = "" if "import pytest" in source else "import pytest\n\n"
     fixture = (
         "\n\n@pytest.fixture(autouse=True)\n"
         "def reset_shared_items() -> None:\n"
-        "    seen_items.clear()\n"
+        f"    {state_name}.clear()\n"
     )
     return f"{pytest_import}{source.rstrip()}{fixture}"
 
@@ -61,8 +68,14 @@ def _add_reset_fixture(source: str) -> str:
 def _add_race_wait(source: str) -> str:
     if "worker.start()" not in source:
         raise ValueError("race strategy requires worker.start()")
+    start = re.search(r"(\w+)\.start\(\)", source)
+    result = re.search(r"(\w+)\s*=\s*\[", source)
+    if not start or not result:
+        raise ValueError("race strategy requires a worker and result list")
     source = source.replace(
-        "worker.start()", "worker.start()\n    _wait_for_result(result)", 1
+        f"{start.group(1)}.start()",
+        f"{start.group(1)}.start()\n    _wait_for_result({result.group(1)})",
+        1,
     )
     if "import time" not in source:
         source = f"import time\n\n{source}"

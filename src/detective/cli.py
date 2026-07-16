@@ -3,6 +3,8 @@
 import argparse
 from collections.abc import Sequence
 import inspect
+import subprocess
+from tempfile import TemporaryDirectory
 from pathlib import Path
 
 from detective.classify.heuristics import classify
@@ -16,6 +18,7 @@ from detective.repro.runner import reproduce
 COMMANDS = ("ingest", "repro", "diagnose", "fix", "run")
 FIXTURES = ("shared", "race", "time")
 PROJECT_DIR = Path(__file__).parents[2]
+ORIGINAL_PROJECT_DIR = PROJECT_DIR
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -66,18 +69,41 @@ def _run_repository(repository: str, no_pr: bool = False) -> int:
     report = ingest(repository)
     if report.test_id == "unknown":
         raise RuntimeError("ingested failure did not identify a test to reproduce")
-    repo_path = PROJECT_DIR
-    before = _reproduce_with_progress(report, repo_path)
-    source_path = repo_path / report.test_id.split("::", maxsplit=1)[0]
-    diagnosis = classify(before, source_path.read_text())
-    proposal = propose_fix(report, diagnosis, repo_path)
-    _print_failure_rates(before, proposal)
-    _print_diff(proposal.diff)
-    if no_pr:
-        print(render_pr_body(report, before, diagnosis, proposal))
+    checkout = TemporaryDirectory() if PROJECT_DIR == ORIGINAL_PROJECT_DIR else None
+    try:
+        repo_path = (
+            Path(checkout.name) / name_from_repository(repository)
+            if checkout
+            else PROJECT_DIR
+        )
+        if checkout:
+            subprocess.run(
+                [
+                    "git",
+                    "clone",
+                    f"https://github.com/{repository}.git",
+                    str(repo_path),
+                ],
+                check=True,
+            )
+        before = _reproduce_with_progress(report, repo_path)
+        source_path = repo_path / report.test_id.split("::", maxsplit=1)[0]
+        diagnosis = classify(before, source_path.read_text())
+        proposal = propose_fix(report, diagnosis, repo_path)
+        _print_failure_rates(before, proposal)
+        _print_diff(proposal.diff)
+        if no_pr:
+            print(render_pr_body(report, before, diagnosis, proposal))
+            return 0
+        print(open_pr(repository, repo_path, report, before, diagnosis, proposal))
         return 0
-    print(open_pr(repository, repo_path, report, before, diagnosis, proposal))
-    return 0
+    finally:
+        if checkout:
+            checkout.cleanup()
+
+
+def name_from_repository(repository: str) -> str:
+    return repository.rsplit("/", maxsplit=1)[-1]
 
 
 def _fixture_report(fixture: str) -> FailureReport:

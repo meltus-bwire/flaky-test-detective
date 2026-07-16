@@ -3,6 +3,7 @@
 from collections.abc import Mapping
 import io
 import os
+import re
 from pathlib import PurePosixPath
 import zipfile
 from typing import Any
@@ -54,10 +55,11 @@ def _fetch_report(
     )
     logs_response.raise_for_status()
     metadata = _run_metadata(run)
+    logs = _extract_logs(logs_response.content)
     return FailureReport(
-        test_id="unknown",
+        test_id=_extract_test_id(logs),
         error_message=f"Workflow run {run_id} failed",
-        stack_trace=_extract_logs(logs_response.content),
+        stack_trace=logs,
         run_metadata=metadata,
     )
 
@@ -95,3 +97,15 @@ def _extract_logs(content: bytes) -> str:
             return "\n".join(logs)
     except zipfile.BadZipFile:
         return content.decode("utf-8", errors="replace")
+
+
+def _extract_test_id(logs: str) -> str:
+    patterns = (
+        r"(?:ERROR|FAILED)\s+([\w./-]+\.py::[\w.:-]+)",
+        r"([\w./-]+\.py::[\w.:-]+)\s+FAILED",
+    )
+    for pattern in patterns:
+        match = re.search(pattern, logs)
+        if match:
+            return match.group(1)
+    return "unknown"
