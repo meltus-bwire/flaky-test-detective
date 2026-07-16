@@ -69,7 +69,7 @@ def _add_race_wait(source: str) -> str:
     if "worker.start()" not in source:
         raise ValueError("race strategy requires worker.start()")
     start = re.search(r"(\w+)\.start\(\)", source)
-    result = re.search(r"(\w+)\s*=\s*\[", source)
+    result = re.search(r"(\w+)(?:\s*:\s*[^=]+)?\s*=\s*\[", source)
     if not start or not result:
         raise ValueError("race strategy requires a worker and result list")
     source = source.replace(

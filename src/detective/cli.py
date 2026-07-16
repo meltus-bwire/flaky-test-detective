@@ -4,6 +4,7 @@ import argparse
 from collections.abc import Sequence
 import inspect
 import subprocess
+import sys
 from tempfile import TemporaryDirectory
 from pathlib import Path
 
@@ -19,6 +20,7 @@ COMMANDS = ("ingest", "repro", "diagnose", "fix", "run")
 FIXTURES = ("shared", "race", "time")
 PROJECT_DIR = Path(__file__).parents[2]
 ORIGINAL_PROJECT_DIR = PROJECT_DIR
+GREEN, RED, CYAN, RESET = ("\033[32m", "\033[31m", "\033[36m", "\033[0m") if sys.stdout.isatty() else ("", "", "", "")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -123,15 +125,16 @@ def _fixture_report(fixture: str) -> FailureReport:
 
 
 def _print_failure_rates(before: ReproResult, proposal: FixProposal) -> None:
-    print("Perturbation | Before | After")
+    print(f"{CYAN}Perturbation | Before | After{RESET}")
     print("--- | --- | ---")
     for perturbation, before_rate in before.matrix.items():
         after_rate = proposal.validation_matrix[perturbation]
-        print(f"{perturbation} | {before_rate:.0%} | {after_rate:.0%}")
+        color = GREEN if after_rate == 0 else RED
+        print(f"{perturbation} | {before_rate:.0%} | {color}{after_rate:.0%}{RESET}")
 
 
 def _print_progress(perturbation: str, completed: int, total: int) -> None:
-    print(f"\rRunning {perturbation}: {completed}/{total}", end="", flush=True)
+    print(f"\r{CYAN}Running {perturbation}: {completed}/{total}{RESET}", end="", flush=True)
     if completed == total:
         print()
 

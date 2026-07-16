@@ -90,7 +90,20 @@ def _command(
     if perturbation is Perturbation.BASELINE:
         return ["uv", "run", "pytest", *arguments]
     project = "." if (repo_dir / "pyproject.toml").exists() else str(PROJECT_DIR)
-    return ["uv", "run", "--project", project, "pytest", *arguments]
+    if project != ".":
+        return ["uv", "run", "--project", project, "pytest", *arguments]
+    return [
+        "uv",
+        "run",
+        "--project",
+        project,
+        "--with",
+        "pytest-forked",
+        "--with",
+        "pytest-randomly",
+        "pytest",
+        *arguments,
+    ]
 
 
 def _environment(perturbation: Perturbation, repo_dir: Path) -> dict[str, str] | None:
