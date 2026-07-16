@@ -41,7 +41,7 @@ def test_run_shared_fixture_prints_before_and_after_rates(
     monkeypatch.setattr("detective.cli.reproduce", reproduce_fixture)
     monkeypatch.setattr(
         "detective.cli.classify",
-        lambda result: Diagnosis(Cause.SHARED_STATE, 0.8, [], []),
+        lambda *_: Diagnosis(Cause.SHARED_STATE, 0.8, [], []),
     )
     monkeypatch.setattr("detective.cli.propose_fix", lambda *_: proposal)
 

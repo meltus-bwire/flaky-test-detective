@@ -41,7 +41,7 @@ task = one coherent outcome. Check the box and note the commit when done.
       M2-004 `datetime.now()` in assertions, module globals, thread usage)
 - [x] M2-005 `fix/patcher.py` v2: strategies for RACE_CONDITION (poll-with-timeout
       helper) and TIME_DEPENDENCY (freeze-time fixture)
-- [ ] M2-006 End-to-end green on all three fixtures via `make demo`
+- [x] M2-006 End-to-end green on all three fixtures via `make demo`
 
 ## Milestone 3 — Real CI in, real PR out
 

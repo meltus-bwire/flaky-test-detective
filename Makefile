@@ -2,6 +2,8 @@
 
 demo:
 	uv run detective run --fixture shared
+	uv run detective run --fixture race
+	uv run detective run --fixture time
 
 test:
 	uv run pytest -q

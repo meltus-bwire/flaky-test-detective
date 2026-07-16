@@ -11,6 +11,7 @@ from detective.repro.runner import reproduce
 
 
 COMMANDS = ("ingest", "repro", "diagnose", "fix", "run")
+FIXTURES = ("shared", "race", "time")
 PROJECT_DIR = Path(__file__).parents[2]
 
 
@@ -24,7 +25,7 @@ def build_parser() -> argparse.ArgumentParser:
             command, help=f"Run the {command} stage."
         )
         if command == "run":
-            command_parser.add_argument("--fixture", choices=("shared",), required=True)
+            command_parser.add_argument("--fixture", choices=FIXTURES, required=True)
 
     return parser
 
@@ -43,18 +44,24 @@ def _run_fixture(fixture: str) -> int:
     report = _fixture_report(fixture)
     fixture_dir = PROJECT_DIR / "fixtures" / "flaky-repo"
     before = reproduce(report, fixture_dir)
-    diagnosis = classify(before)
+    source_path = fixture_dir / report.test_id.split("::", maxsplit=1)[0]
+    diagnosis = classify(before, source_path.read_text())
     proposal = propose_fix(report, diagnosis, fixture_dir)
     _print_failure_rates(before, proposal)
     return 0
 
 
 def _fixture_report(fixture: str) -> FailureReport:
-    if fixture != "shared":
+    test_ids = {
+        "shared": "test_shared.py::test_a_starts_with_no_shared_items",
+        "race": "test_race.py::test_background_worker_completes",
+        "time": "test_time.py::test_report_is_not_generated_at_midnight",
+    }
+    if fixture not in test_ids:
         raise ValueError(f"unsupported fixture: {fixture}")
     return FailureReport(
-        test_id="test_shared.py::test_a_starts_with_no_shared_items",
-        error_message="shared state leaked from another test",
+        test_id=test_ids[fixture],
+        error_message=f"{fixture} fixture failed under perturbation",
         stack_trace="",
         run_metadata={},
     )
