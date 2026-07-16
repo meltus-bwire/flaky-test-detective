@@ -50,7 +50,7 @@ task = one coherent outcome. Check the box and note the commit when done.
 - [x] M3-002 `ingest/junit_parser.py`: parse JUnit XML → `FailureReport`
 - [x] M3-003 `pr/github_pr.py`: create branch, commit validated diff, open PR with
       generated explanation body (before/after matrix table in Markdown)
-- [ ] M3-004 `detective run --repo <owner/name>`: full loop against a real GitHub repo
+- [x] M3-004 `detective run --repo <owner/name>`: full loop against a real GitHub repo
 - [ ] M3-005 Dry-run flag (`--no-pr`) that prints the PR body instead of posting
 
 ## Milestone 4 — Documentation

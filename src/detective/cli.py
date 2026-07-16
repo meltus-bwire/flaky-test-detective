@@ -6,7 +6,9 @@ from pathlib import Path
 
 from detective.classify.heuristics import classify
 from detective.fix.patcher import propose_fix
+from detective.ingest.github_actions import ingest
 from detective.models import FailureReport, FixProposal, ReproResult
+from detective.pr.github_pr import open_pr
 from detective.repro.runner import reproduce
 
 
@@ -25,7 +27,9 @@ def build_parser() -> argparse.ArgumentParser:
             command, help=f"Run the {command} stage."
         )
         if command == "run":
-            command_parser.add_argument("--fixture", choices=FIXTURES, required=True)
+            group = command_parser.add_mutually_exclusive_group(required=True)
+            group.add_argument("--fixture", choices=FIXTURES)
+            group.add_argument("--repo", metavar="OWNER/NAME")
 
     return parser
 
@@ -34,6 +38,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Run the selected pipeline-stage stub."""
     args = build_parser().parse_args(argv)
     if args.command == "run":
+        if args.repo:
+            return _run_repository(args.repo)
         return _run_fixture(args.fixture)
 
     print(f"{args.command} is not implemented yet.")
@@ -48,6 +54,21 @@ def _run_fixture(fixture: str) -> int:
     diagnosis = classify(before, source_path.read_text())
     proposal = propose_fix(report, diagnosis, fixture_dir)
     _print_failure_rates(before, proposal)
+    return 0
+
+
+def _run_repository(repository: str) -> int:
+    """Run ingestion, diagnosis, fixing, and PR creation for a checkout."""
+    report = ingest(repository)
+    if report.test_id == "unknown":
+        raise RuntimeError("ingested failure did not identify a test to reproduce")
+    repo_path = PROJECT_DIR
+    before = reproduce(report, repo_path)
+    source_path = repo_path / report.test_id.split("::", maxsplit=1)[0]
+    diagnosis = classify(before, source_path.read_text())
+    proposal = propose_fix(report, diagnosis, repo_path)
+    _print_failure_rates(before, proposal)
+    print(open_pr(repository, repo_path, report, before, diagnosis, proposal))
     return 0
 
 
