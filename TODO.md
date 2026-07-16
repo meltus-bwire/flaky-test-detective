@@ -55,7 +55,7 @@ task = one coherent outcome. Check the box and note the commit when done.
 
 ## Milestone 4 — Documentation
 
-- [ ] M4-001 `classify/llm_analyzer.py`: LLM fallback for UNKNOWN, structured verdict
+- [x] M4-001 `classify/llm_analyzer.py`: LLM fallback for UNKNOWN, structured verdict
       with validation
 - [ ] M4-001 Pretty terminal output: live rerun progress, failure-rate table, diff view
 - [ ] M4-001 Rehearsed demo script in README: trigger red CI on fixture repo →

@@ -1,9 +1,15 @@
 """Deterministic classification rules for reproduction results."""
 
+from collections.abc import Callable
+
 from detective.models import Cause, Diagnosis, ReproResult
 
 
-def classify(result: ReproResult, source: str | None = None) -> Diagnosis:
+def classify(
+    result: ReproResult,
+    source: str | None = None,
+    fallback: Callable[[ReproResult, str | None], Diagnosis] | None = None,
+) -> Diagnosis:
     """Classify a reproduction matrix with optional static source signals."""
     if source is not None:
         diagnosis = _classify_static_signals(result, source)
@@ -26,12 +32,13 @@ def classify(result: ReproResult, source: str | None = None) -> Diagnosis:
             suspect_lines=[],
         )
 
-    return Diagnosis(
+    unknown = Diagnosis(
         cause=Cause.UNKNOWN,
         confidence=0.0,
         evidence=["The reproduction matrix and source do not match a known heuristic."],
         suspect_lines=[],
     )
+    return fallback(result, source) if fallback is not None else unknown
 
 
 def _classify_static_signals(result: ReproResult, source: str) -> Diagnosis | None:
