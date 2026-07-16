@@ -38,7 +38,7 @@ def test_propose_fix_rejects_unsupported_diagnoses(tmp_path: Path) -> None:
     report = FailureReport("test_shared.py::test_a", "failed", "trace", {})
     diagnosis = Diagnosis(Cause.UNKNOWN, 0.0, [], [])
 
-    with pytest.raises(ValueError, match="only supports shared-state"):
+    with pytest.raises(ValueError, match="v2 patcher does not support"):
         propose_fix(report, diagnosis, tmp_path)
 
 
@@ -55,3 +55,50 @@ def test_propose_fix_rejects_failed_validation(
 
     with pytest.raises(RuntimeError, match="did not pass matrix validation"):
         propose_fix(report, diagnosis, source_dir)
+
+
+@pytest.mark.parametrize(
+    ("filename", "test_id", "cause", "source", "marker"),
+    [
+        (
+            "test_race.py",
+            "test_race.py::test_worker",
+            Cause.RACE_CONDITION,
+            "from threading import Thread\nresult = []\nworker.start()\n",
+            "_wait_for_result(result)",
+        ),
+        (
+            "test_time.py",
+            "test_time.py::test_time",
+            Cause.TIME_DEPENDENCY,
+            "from datetime import datetime\nassert datetime.now().hour\n",
+            "def freeze_time(monkeypatch):",
+        ),
+    ],
+)
+def test_propose_fix_supports_race_and_time_strategies(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    filename: str,
+    test_id: str,
+    cause: Cause,
+    source: str,
+    marker: str,
+) -> None:
+    source_dir = tmp_path / "fixture"
+    source_dir.mkdir()
+    (source_dir / filename).write_text(source)
+    report = FailureReport(test_id, "failed", "trace", {})
+    diagnosis = Diagnosis(cause, 0.9, [], [])
+
+    def reproduce_patched_copy(
+        report: FailureReport, copied_dir: Path, runs: int
+    ) -> ReproResult:
+        assert marker in (copied_dir / filename).read_text()
+        return ReproResult(report.test_id, {"baseline": 0.0}, [])
+
+    monkeypatch.setattr("detective.fix.patcher.reproduce", reproduce_patched_copy)
+
+    proposal = propose_fix(report, diagnosis, source_dir, runs=1)
+
+    assert marker in proposal.diff
