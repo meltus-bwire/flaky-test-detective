@@ -1,6 +1,8 @@
+from pathlib import Path
+
 import pytest
 
-from detective.repro.perturb import Perturbation, pytest_arguments
+from detective.repro.perturb import Perturbation, prepare, pytest_arguments
 
 
 def test_random_order_runs_the_test_file_with_a_seed() -> None:
@@ -23,3 +25,12 @@ def test_fresh_process_runs_the_suspect_test() -> None:
         "--forked",
         test_id,
     ]
+
+
+def test_scheduling_jitter_installs_a_thread_trace_shim(tmp_path: Path) -> None:
+    prepare(Perturbation.SCHEDULING_JITTER, tmp_path)
+
+    shim = (tmp_path / "sitecustomize.py").read_text()
+
+    assert "threading.settrace(_jitter)" in shim
+    assert "time.sleep(0.01)" in shim

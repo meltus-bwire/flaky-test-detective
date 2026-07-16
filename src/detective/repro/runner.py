@@ -1,13 +1,14 @@
 """Run suspect tests repeatedly in an isolated copy of a repository."""
 
 from pathlib import Path
+import os
 import random
 import shutil
 import subprocess
 from tempfile import TemporaryDirectory
 
 from detective.models import FailureReport, ReproResult
-from detective.repro.perturb import Perturbation, pytest_arguments
+from detective.repro.perturb import Perturbation, prepare, pytest_arguments
 
 
 DEFAULT_RUNS = 20
@@ -44,6 +45,7 @@ def reproduce(
 def _run_repeatedly(
     test_id: str, repo_dir: Path, runs: int, perturbation: Perturbation
 ) -> list[str]:
+    prepare(perturbation, repo_dir)
     failures: list[str] = []
     for _ in range(runs):
         seed = (
@@ -56,6 +58,7 @@ def _run_repeatedly(
             cwd=repo_dir,
             capture_output=True,
             check=False,
+            env=_environment(perturbation, repo_dir),
             text=True,
         )
         if result.returncode:
@@ -68,6 +71,16 @@ def _command(perturbation: Perturbation, test_id: str, seed: int | None) -> list
     if perturbation is Perturbation.BASELINE:
         return ["uv", "run", "pytest", *arguments]
     return ["uv", "run", "--project", str(PROJECT_DIR), "pytest", *arguments]
+
+
+def _environment(perturbation: Perturbation, repo_dir: Path) -> dict[str, str] | None:
+    if perturbation is not Perturbation.SCHEDULING_JITTER:
+        return None
+    current_path = os.environ.get("PYTHONPATH", "")
+    python_path = str(repo_dir)
+    if current_path:
+        python_path = f"{python_path}{os.pathsep}{current_path}"
+    return {**os.environ, "PYTHONPATH": python_path}
 
 
 def _format_failure(result: subprocess.CompletedProcess[str]) -> str:

@@ -34,7 +34,7 @@ task = one coherent outcome. Check the box and note the commit when done.
 
 ## Milestone 2 — Full cause coverage
 
-- [ ] M2-001 `repro/perturb.py` v2: scheduling jitter injection (settrace/monkeypatched
+- [x] M2-001 `repro/perturb.py` v2: scheduling jitter injection (settrace/monkeypatched
       sleep) to force RACE_CONDITION
 - [ ] M2-002 `repro/perturb.py` v3: clock shifting/freezing to force TIME_DEPENDENCY
 - [ ] M2-003 `classify/heuristics.py` v2: static source signals (sleep-near-assert,
