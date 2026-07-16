@@ -1,6 +1,7 @@
 """Run suspect tests repeatedly in an isolated copy of a repository."""
 
 from pathlib import Path
+from collections.abc import Callable
 import os
 import random
 import shutil
@@ -17,7 +18,10 @@ PROJECT_DIR = Path(__file__).parents[3]
 
 
 def reproduce(
-    report: FailureReport, source_dir: Path, runs: int = DEFAULT_RUNS
+    report: FailureReport,
+    source_dir: Path,
+    runs: int = DEFAULT_RUNS,
+    progress: Callable[[str, int, int], None] | None = None,
 ) -> ReproResult:
     """Reproduce a failed test repeatedly from a temporary repository copy."""
     if runs < 1:
@@ -31,7 +35,9 @@ def reproduce(
         matrix: dict[str, float] = {}
         sample_failures: list[str] = []
         for perturbation in PERTURBATIONS:
-            failures = _run_repeatedly(report.test_id, repo_dir, runs, perturbation)
+            failures = _run_repeatedly(
+                report.test_id, repo_dir, runs, perturbation, progress
+            )
             matrix[perturbation.value] = len(failures) / runs
             sample_failures.extend(failures)
 
@@ -43,11 +49,15 @@ def reproduce(
 
 
 def _run_repeatedly(
-    test_id: str, repo_dir: Path, runs: int, perturbation: Perturbation
+    test_id: str,
+    repo_dir: Path,
+    runs: int,
+    perturbation: Perturbation,
+    progress: Callable[[str, int, int], None] | None = None,
 ) -> list[str]:
     prepare(perturbation, repo_dir)
     failures: list[str] = []
-    for _ in range(runs):
+    for completed in range(1, runs + 1):
         seed = (
             random.randrange(2**32)
             if perturbation is Perturbation.RANDOM_ORDER
@@ -63,6 +73,8 @@ def _run_repeatedly(
         )
         if result.returncode:
             failures.append(_format_failure(result))
+        if progress is not None:
+            progress(perturbation.value, completed, runs)
     return failures
 
 
