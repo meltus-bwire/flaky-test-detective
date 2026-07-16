@@ -21,7 +21,7 @@ task = one coherent outcome. Check the box and note the commit when done.
 
 ## Milestone 1 — Walking skeleton (end-to-end on ONE fixture, dumb internals OK)
 
-- [ ] M1-001 `repro/runner.py`: copy fixture to temp dir, run one test N times via
+- [x] M1-001 `repro/runner.py`: copy fixture to temp dir, run one test N times via
       `uv run pytest <test_id>` subprocess, collect pass/fail counts
 - [ ] M1-002 `repro/perturb.py` v1: random test order + fresh-process-per-test only
 - [ ] M1-003 `classify/heuristics.py` v1: matrix-only rules (e.g. fails under random
