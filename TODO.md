@@ -45,26 +45,25 @@ task = one coherent outcome. Check the box and note the commit when done.
 
 ## Milestone 3 — Real CI in, real PR out
 
-- [ ] M3-001 `ingest/github_actions.py`: fetch latest failed workflow run + logs for
+- [x] M3-001 `ingest/github_actions.py`: fetch latest failed workflow run + logs for
       a repo via httpx (`GITHUB_TOKEN` env var)
-- [ ] M3-002 `ingest/junit_parser.py`: parse JUnit XML → `FailureReport`
-- [ ] M3-003 `pr/github_pr.py`: create branch, commit validated diff, open PR with
+- [x] M3-002 `ingest/junit_parser.py`: parse JUnit XML → `FailureReport`
+- [x] M3-003 `pr/github_pr.py`: create branch, commit validated diff, open PR with
       generated explanation body (before/after matrix table in Markdown)
-- [ ] M3-004 `detective run --repo <owner/name>`: full loop against a real GitHub repo
-- [ ] M3-005 Dry-run flag (`--no-pr`) that prints the PR body instead of posting
+- [x] M3-004 `detective run --repo <owner/name>`: full loop against a real GitHub repo
+- [x] M3-005 Dry-run flag (`--no-pr`) that prints the PR body instead of posting
 
 ## Milestone 4 — Documentation
 
-- [ ] M4-001 `classify/llm_analyzer.py`: LLM fallback for UNKNOWN, structured verdict
+- [x] M4-001 `classify/llm_analyzer.py`: LLM fallback for UNKNOWN, structured verdict
       with validation
-- [ ] M4-001 Pretty terminal output: live rerun progress, failure-rate table, diff view
-- [ ] M4-001 Rehearsed demo script in README: trigger red CI on fixture repo →
-      run detective → show green PR
-- [ ] M4-001 3-minute pitch notes: problem, arc, what's real vs. mocked
+- [x] M4-002 Pretty terminal output: live rerun progress, failure-rate table, diff view
+- [x] M4-003 Update README.md with overview, setup, architecture, Tech Stack. The readme is the
+      documentation people read to understand the project
 
 ## Bugs / Follow-ups
 
-- [ ] (add as discovered)
+- [x] Guard cause-specific patch strategies when source evidence is insufficient.
 
 ## Explicitly NOT doing (see DESIGN.md "Out of Scope")
 

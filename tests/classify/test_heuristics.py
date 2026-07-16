@@ -1,7 +1,7 @@
 import pytest
 
 from detective.classify.heuristics import classify
-from detective.models import Cause, ReproResult
+from detective.models import Cause, Diagnosis, ReproResult
 
 
 def test_classify_labels_random_order_only_failures_as_shared_state() -> None:
@@ -34,6 +34,15 @@ def test_classify_leaves_ambiguous_matrices_unknown(matrix: dict[str, float]) ->
 
     assert diagnosis.cause is Cause.UNKNOWN
     assert diagnosis.confidence == 0.0
+
+
+def test_classify_uses_fallback_for_unknown() -> None:
+    result = ReproResult("test_example.py::test_example", {"baseline": 0.2}, [])
+
+    def fallback(_result, _source):
+        return Diagnosis(Cause.ORDER_DEPENDENCY, 0.7, ["order"], [3])
+
+    assert classify(result, fallback=fallback).cause is Cause.ORDER_DEPENDENCY
 
 
 def test_classify_identifies_time_dependency_from_clock_and_source() -> None:
