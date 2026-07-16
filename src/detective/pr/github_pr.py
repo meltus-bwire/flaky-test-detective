@@ -38,7 +38,7 @@ def open_pr(
     _git(repo_path, ["commit", "-m", message])
     _git(repo_path, ["push", "--set-upstream", "origin", branch])
 
-    body = _body(report, repro, diagnosis, proposal)
+    body = render_pr_body(report, repro, diagnosis, proposal)
     headers = {
         "Accept": "application/vnd.github+json",
         "Authorization": f"Bearer {token}",
@@ -71,7 +71,7 @@ def _create(
     return response.json()["html_url"]
 
 
-def _body(
+def render_pr_body(
     report: FailureReport,
     repro: ReproResult,
     diagnosis: Diagnosis,

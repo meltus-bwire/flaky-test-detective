@@ -8,7 +8,7 @@ from detective.classify.heuristics import classify
 from detective.fix.patcher import propose_fix
 from detective.ingest.github_actions import ingest
 from detective.models import FailureReport, FixProposal, ReproResult
-from detective.pr.github_pr import open_pr
+from detective.pr.github_pr import open_pr, render_pr_body
 from detective.repro.runner import reproduce
 
 
@@ -30,6 +30,9 @@ def build_parser() -> argparse.ArgumentParser:
             group = command_parser.add_mutually_exclusive_group(required=True)
             group.add_argument("--fixture", choices=FIXTURES)
             group.add_argument("--repo", metavar="OWNER/NAME")
+            command_parser.add_argument(
+                "--no-pr", action="store_true", help="print the PR body without posting"
+            )
 
     return parser
 
@@ -39,7 +42,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "run":
         if args.repo:
-            return _run_repository(args.repo)
+            return _run_repository(args.repo, args.no_pr)
         return _run_fixture(args.fixture)
 
     print(f"{args.command} is not implemented yet.")
@@ -57,7 +60,7 @@ def _run_fixture(fixture: str) -> int:
     return 0
 
 
-def _run_repository(repository: str) -> int:
+def _run_repository(repository: str, no_pr: bool = False) -> int:
     """Run ingestion, diagnosis, fixing, and PR creation for a checkout."""
     report = ingest(repository)
     if report.test_id == "unknown":
@@ -68,6 +71,9 @@ def _run_repository(repository: str) -> int:
     diagnosis = classify(before, source_path.read_text())
     proposal = propose_fix(report, diagnosis, repo_path)
     _print_failure_rates(before, proposal)
+    if no_pr:
+        print(render_pr_body(report, before, diagnosis, proposal))
+        return 0
     print(open_pr(repository, repo_path, report, before, diagnosis, proposal))
     return 0
 
