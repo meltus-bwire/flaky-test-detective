@@ -24,7 +24,7 @@ task = one coherent outcome. Check the box and note the commit when done.
 - [x] M1-001 `repro/runner.py`: copy fixture to temp dir, run one test N times via
       `uv run pytest <test_id>` subprocess, collect pass/fail counts
 - [x] M1-002 `repro/perturb.py` v1: random test order + fresh-process-per-test only
-- [ ] M1-003 `classify/heuristics.py` v1: matrix-only rules (e.g. fails under random
+- [x] M1-003 `classify/heuristics.py` v1: matrix-only rules (e.g. fails under random
       order but not otherwise → SHARED_STATE)
 - [ ] M1-004 `fix/patcher.py` v1: hardcoded strategy for SHARED_STATE
       (add reset fixture), apply to temp copy, revalidate matrix
