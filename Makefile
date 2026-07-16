@@ -1,7 +1,7 @@
 .PHONY: demo test lint check
 
 demo:
-	@echo "Demo is not available until M1-006."
+	uv run detective run --fixture shared
 
 test:
 	uv run pytest -q

@@ -30,7 +30,7 @@ task = one coherent outcome. Check the box and note the commit when done.
       (add reset fixture), apply to temp copy, revalidate matrix
 - [x] M1-005 Wire `detective run --fixture shared` through all stages; print
       before/after failure-rate table
-- [ ] M1-006 `make demo` runs the above; END-TO-END GREEN ← 🎯 checkpoint: demo-able
+- [x] M1-006 `make demo` runs the above; END-TO-END GREEN ← 🎯 checkpoint: demo-able
 
 ## Milestone 2 — Full cause coverage
 
