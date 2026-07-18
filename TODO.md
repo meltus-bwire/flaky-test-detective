@@ -64,6 +64,7 @@ task = one coherent outcome. Check the box and note the commit when done.
 ## Bugs / Follow-ups
 
 - [x] Guard cause-specific patch strategies when source evidence is insufficient.
+- [x] Make OpenAI analysis and plain-language PR explanations part of the pipeline.
 
 ## Explicitly NOT doing (see DESIGN.md "Out of Scope")
 

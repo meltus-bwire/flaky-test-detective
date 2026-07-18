@@ -65,8 +65,12 @@ def _classify_static_signals(result: ReproResult, source: str) -> Diagnosis | No
                 "Scheduling jitter failed and the test contains concurrency timing signals."
             ],
             suspect_lines=race_lines,
-            )
-    if result.matrix.get("random_order", 0.0) > result.matrix.get("baseline", 0.0) and re.search(r"^\w+\s*:\s*(?:list|dict|set)", source, re.MULTILINE) and ".append(" in source:
+        )
+    if (
+        result.matrix.get("random_order", 0.0) > result.matrix.get("baseline", 0.0)
+        and re.search(r"^\w+\s*:\s*(?:list|dict|set)", source, re.MULTILINE)
+        and ".append(" in source
+    ):
         return Diagnosis(
             Cause.SHARED_STATE,
             0.85,

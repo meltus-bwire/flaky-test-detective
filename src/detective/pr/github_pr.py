@@ -19,6 +19,7 @@ def open_pr(
     diagnosis: Diagnosis,
     proposal: FixProposal,
     client: httpx.Client | None = None,
+    reviewer_explanation: str | None = None,
 ) -> str:
     """Commit a validated proposal and return the created PR URL."""
     if not proposal.diff.strip():
@@ -38,7 +39,7 @@ def open_pr(
     _git(repo_path, ["commit", "-m", message])
     _git(repo_path, ["push", "--set-upstream", "origin", branch])
 
-    body = render_pr_body(report, repro, diagnosis, proposal)
+    body = render_pr_body(report, repro, diagnosis, proposal, reviewer_explanation)
     headers = {
         "Accept": "application/vnd.github+json",
         "Authorization": f"Bearer {token}",
@@ -76,6 +77,7 @@ def render_pr_body(
     repro: ReproResult,
     diagnosis: Diagnosis,
     proposal: FixProposal,
+    reviewer_explanation: str | None = None,
 ) -> str:
     rows = ["| Perturbation | Before | After |", "| --- | ---: | ---: |"]
     for perturbation in repro.matrix:
@@ -86,11 +88,13 @@ def render_pr_body(
     evidence = (
         "\n".join(f"- {item}" for item in diagnosis.evidence) or "- None recorded"
     )
+    explanation = reviewer_explanation or proposal.explanation_md
     return (
-        f"## Flaky test\n`{report.test_id}`\n\n"
-        f"## Diagnosis\nCause: `{diagnosis.cause.value}`\n"
+        f"## What this fixes\n`{report.test_id}`\n\n{explanation}\n\n"
+        f"## Diagnosis details\nCause: `{diagnosis.cause.value}`\n"
         f"Confidence: {diagnosis.confidence:.2f}\n\n{evidence}\n\n"
-        f"## Validation\n{chr(10).join(rows)}\n\n{proposal.explanation_md}"
+        f"## Verification\nThe same conditions that exposed the problem were rerun "
+        f"after the change.\n\n{chr(10).join(rows)}"
     )
 
 

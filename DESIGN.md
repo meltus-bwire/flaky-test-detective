@@ -88,22 +88,20 @@ perturbation in a **temp copy** of the repo, never in place. The matrix of
 
 Output: `ReproResult(test_id, matrix: dict[Perturbation, FailureRate], sample_failures)`.
 
-### 3. Classify — heuristics first, LLM as fallback
+### 3. Classify — OpenAI-guided, evidence-bound diagnosis
 
-Two-tier design:
+The OpenAI model is the primary decision-maker. It receives the failure report,
+repro matrix, sample failures, complete suspect-test source, and deterministic
+heuristic signals. It must return a schema-validated cause, confidence, and
+evidence. The heuristics combine the repro matrix with static signals in the
+test source — `time.sleep(` near assertions, `datetime.now()` / `time.time()`
+in assertions, module-level mutable globals, and thread use without joins.
+Schema validation and the later repro matrix validation prevent a plausible
+model answer from becoming an unproven PR.
 
-1. **Heuristics (cheap, deterministic, demo-safe):** combine the repro matrix
-   with static signals in the test source — `time.sleep(` near assertions,
-   `datetime.now()` / `time.time()` in assertions, module-level mutable
-   globals, thread/`asyncio.gather` usage without joins, filesystem/tmp reuse.
-   If matrix + static signal agree, emit a `Diagnosis` with high confidence.
-2. **LLM analyzer (fallback):** only when heuristics are ambiguous. Prompt =
-   test source + failure diff + repro matrix. The LLM must return a structured
-   verdict (cause enum + confidence + cited evidence lines), which we validate
-   before accepting.
-
-Rationale: heuristics make the happy-path demo deterministic and free; the LLM
-handles the long tail without being a single point of failure on stage.
+The same model writes the PR explanation after the patch passes validation.
+Its prompt requires plain language: what was unreliable, what changed, and
+what evidence shows the fix works.
 
 Output: `Diagnosis(cause: Cause, confidence, evidence, suspect_lines)`.
 

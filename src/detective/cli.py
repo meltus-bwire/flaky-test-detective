@@ -9,6 +9,7 @@ from tempfile import TemporaryDirectory
 from pathlib import Path
 
 from detective.classify.heuristics import classify
+from detective.classify.llm_analyzer import analyze, explain_for_review
 from detective.fix.patcher import propose_fix
 from detective.ingest.github_actions import ingest
 from detective.models import FailureReport, FixProposal, ReproResult
@@ -20,7 +21,11 @@ COMMANDS = ("ingest", "repro", "diagnose", "fix", "run")
 FIXTURES = ("shared", "race", "time")
 PROJECT_DIR = Path(__file__).parents[2]
 ORIGINAL_PROJECT_DIR = PROJECT_DIR
-GREEN, RED, CYAN, RESET = ("\033[32m", "\033[31m", "\033[36m", "\033[0m") if sys.stdout.isatty() else ("", "", "", "")
+GREEN, RED, CYAN, RESET = (
+    ("\033[32m", "\033[31m", "\033[36m", "\033[0m")
+    if sys.stdout.isatty()
+    else ("", "", "", "")
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -60,7 +65,8 @@ def _run_fixture(fixture: str) -> int:
     fixture_dir = PROJECT_DIR / "fixtures" / "flaky-repo"
     before = _reproduce_with_progress(report, fixture_dir)
     source_path = fixture_dir / report.test_id.split("::", maxsplit=1)[0]
-    diagnosis = classify(before, source_path.read_text())
+    source = source_path.read_text()
+    diagnosis = analyze(report, before, source, classify(before, source))
     proposal = propose_fix(report, diagnosis, fixture_dir)
     _print_failure_rates(before, proposal)
     return 0
@@ -90,14 +96,30 @@ def _run_repository(repository: str, no_pr: bool = False) -> int:
             )
         before = _reproduce_with_progress(report, repo_path)
         source_path = repo_path / report.test_id.split("::", maxsplit=1)[0]
-        diagnosis = classify(before, source_path.read_text())
+        source = source_path.read_text()
+        diagnosis = analyze(report, before, source, classify(before, source))
         proposal = propose_fix(report, diagnosis, repo_path)
+        reviewer_explanation = explain_for_review(report, before, diagnosis, proposal)
         _print_failure_rates(before, proposal)
         _print_diff(proposal.diff)
         if no_pr:
-            print(render_pr_body(report, before, diagnosis, proposal))
+            print(
+                render_pr_body(
+                    report, before, diagnosis, proposal, reviewer_explanation
+                )
+            )
             return 0
-        print(open_pr(repository, repo_path, report, before, diagnosis, proposal))
+        print(
+            open_pr(
+                repository,
+                repo_path,
+                report,
+                before,
+                diagnosis,
+                proposal,
+                reviewer_explanation=reviewer_explanation,
+            )
+        )
         return 0
     finally:
         if checkout:
@@ -134,7 +156,11 @@ def _print_failure_rates(before: ReproResult, proposal: FixProposal) -> None:
 
 
 def _print_progress(perturbation: str, completed: int, total: int) -> None:
-    print(f"\r{CYAN}Running {perturbation}: {completed}/{total}{RESET}", end="", flush=True)
+    print(
+        f"\r{CYAN}Running {perturbation}: {completed}/{total}{RESET}",
+        end="",
+        flush=True,
+    )
     if completed == total:
         print()
 
