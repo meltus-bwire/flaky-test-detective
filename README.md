@@ -6,7 +6,9 @@ running on GitHub Actions.
 
 ## Setup
 
-Requirements: Python 3.14 and [uv](https://docs.astral.sh/uv/).
+Requirements: Python 3.14 and [uv](https://docs.astral.sh/uv/). Set
+`OPENAI_API_KEY` to let the detective use OpenAI models for diagnosis and the
+plain-language explanation included in every generated PR.
 
 ```sh
 uv sync
@@ -31,8 +33,9 @@ uv run detective run --repo owner/name --no-pr  # print the body only
 
 - **CI triage:** turn an intermittent pytest failure into evidence about race,
   time, shared-state, or order-dependent behavior.
-- **Safe automated repair:** generate a small, cause-specific patch and verify
-  it against the same perturbation matrix before opening a PR.
+- **AI-guided, safe automated repair:** use an OpenAI model to interpret the
+  failure evidence and write a reviewer-friendly explanation, then verify the
+  cause-specific patch against the same perturbation matrix before opening a PR.
 - **Developer investigation:** use `--no-pr` to inspect the diagnosis, failure
   rates, and proposed diff without creating a branch or changing GitHub.
 - **Fixture and regression testing:** run `make demo` to exercise the complete
@@ -78,7 +81,7 @@ GitHub Actions logs/JUnit
           ↓ FailureReport
        Ingest → Reproduce (N=20, targeted perturbations)
           ↓ ReproResult
-       Classify (heuristics, then validated LLM fallback)
+       Classify (OpenAI model, grounded by heuristics and validated output)
           ↓ Diagnosis
        Fix (minimal patch + matrix validation)
           ↓ FixProposal

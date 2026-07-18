@@ -15,10 +15,16 @@ def test_run_repo_wires_pipeline(monkeypatch, tmp_path, capsys) -> None:
     )
     monkeypatch.setattr("detective.cli.reproduce", lambda r, path: repro)
     monkeypatch.setattr("detective.cli.classify", lambda result, source: diagnosis)
+    monkeypatch.setattr(
+        "detective.cli.analyze", lambda report, result, source, heuristic: diagnosis
+    )
+    monkeypatch.setattr(
+        "detective.cli.explain_for_review", lambda *args: "Clear explanation."
+    )
     monkeypatch.setattr("detective.cli.propose_fix", lambda r, d, path: proposal)
     monkeypatch.setattr(
         "detective.cli.open_pr",
-        lambda repo, path, r, b, d, p: "https://example.test/pr/1",
+        lambda *args, **kwargs: "https://example.test/pr/1",
     )
     (tmp_path / "tests").mkdir()
     (tmp_path / "tests/test.py").write_text("def test_case(): pass")
@@ -37,6 +43,12 @@ def test_run_repo_no_pr_prints_body(monkeypatch, tmp_path, capsys) -> None:
     monkeypatch.setattr("detective.cli.ingest", lambda repo: report)
     monkeypatch.setattr("detective.cli.reproduce", lambda r, path: repro)
     monkeypatch.setattr("detective.cli.classify", lambda result, source: diagnosis)
+    monkeypatch.setattr(
+        "detective.cli.analyze", lambda report, result, source, heuristic: diagnosis
+    )
+    monkeypatch.setattr(
+        "detective.cli.explain_for_review", lambda *args: "Clear explanation."
+    )
     monkeypatch.setattr("detective.cli.propose_fix", lambda r, d, path: proposal)
     monkeypatch.setattr(
         "detective.cli.open_pr", lambda *args: (_ for _ in ()).throw(AssertionError())
@@ -45,4 +57,4 @@ def test_run_repo_no_pr_prints_body(monkeypatch, tmp_path, capsys) -> None:
     (tmp_path / "tests/test.py").write_text("def test_case(): pass")
 
     assert main(["run", "--repo", "owner/name", "--no-pr"]) == 0
-    assert "## Flaky test" in capsys.readouterr().out
+    assert "## What this fixes" in capsys.readouterr().out

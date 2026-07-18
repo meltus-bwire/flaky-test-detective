@@ -141,3 +141,20 @@ stage narration clean.
 
 **Consequences:** No abstraction layers for hypothetical future runners —
 write the concrete thing.
+
+---
+
+# ADR-009: OpenAI models guide diagnosis and generated PR explanations
+
+2026-07-18 · Accepted
+
+**Decision:** The OpenAI Responses API is the primary diagnosis path. It receives
+the CI evidence, reproduction results, test source, and deterministic heuristic
+signals, then returns a schema-validated diagnosis. A second model call writes
+the PR explanation in plain language after the candidate patch passes validation.
+
+**Reason:** The detective must understand unfamiliar failures and communicate
+clearly with reviewers, rather than only matching a small set of fixture patterns.
+
+**Consequences:** Runs require `OPENAI_API_KEY`. Heuristics and perturbation
+validation remain mandatory guardrails; model output alone can never open a PR.
