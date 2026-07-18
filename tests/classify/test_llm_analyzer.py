@@ -66,6 +66,46 @@ def test_analyze_uses_structured_openai_output() -> None:
     assert request["text"] is not None
 
 
+@pytest.mark.parametrize(
+    "output_text, error",
+    [
+        ("not JSON", "Expecting value"),
+        (
+            '{"cause":"race_condition","confidence":1.2,'
+            '"evidence":[],"suspect_lines":[]}',
+            "known cause and valid confidence",
+        ),
+        (
+            '{"cause":"race_condition","confidence":"0.8",'
+            '"evidence":[],"suspect_lines":[]}',
+            "invalid schema",
+        ),
+        (
+            '{"cause":"race_condition","confidence":0.8,'
+            '"evidence":["jitter fails"],"suspect_lines":[true]}',
+            "positive integers",
+        ),
+        (
+            '{"cause":"race_condition","confidence":0.8,'
+            '"evidence":[],"suspect_lines":[],"extra":"unsupported"}',
+            "invalid schema",
+        ),
+    ],
+)
+def test_analyze_rejects_invalid_model_verdicts(output_text: str, error: str) -> None:
+    report = FailureReport("tests/test.py::test_case", "empty result", "trace", {})
+    result = ReproResult(report.test_id, {"scheduling_jitter": 1.0}, ["failed"])
+
+    with pytest.raises(ValueError, match=error):
+        analyze(
+            report,
+            result,
+            "assert result",
+            Diagnosis(Cause.UNKNOWN, 0, [], []),
+            _Client(output_text),  # type: ignore[arg-type]
+        )
+
+
 def test_explain_for_review_returns_plain_model_markdown() -> None:
     client = _Client(
         "The test sometimes checked the result before the worker finished."
@@ -83,6 +123,22 @@ def test_explain_for_review_returns_plain_model_markdown() -> None:
     )
 
     assert explanation.startswith("The test sometimes")
+
+
+@pytest.mark.parametrize("output_text", ["", " \n\t "])
+def test_explain_for_review_rejects_empty_model_responses(output_text: str) -> None:
+    report = FailureReport("tests/test.py::test_case", "empty", "", {})
+    repro = ReproResult(report.test_id, {"baseline": 0.5}, [])
+    proposal = FixProposal("diff", "Wait for the worker.", {"baseline": 0.0})
+
+    with pytest.raises(ValueError, match="empty PR explanation"):
+        explain_for_review(
+            report,
+            repro,
+            Diagnosis(Cause.RACE_CONDITION, 0.9, [], []),
+            proposal,
+            _Client(output_text),  # type: ignore[arg-type]
+        )
 
 
 def test_load_config_reads_dotenv(monkeypatch: pytest.MonkeyPatch) -> None:

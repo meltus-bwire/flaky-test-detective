@@ -14,7 +14,10 @@ from detective.models import Cause, Diagnosis, FailureReport, FixProposal, Repro
 DEFAULT_MODEL = "gpt-5-mini"
 
 
-load_dotenv()
+def load_config() -> None:
+    """Load local OpenAI configuration when a default client is needed."""
+    load_dotenv()
+
 
 def analyze(
     report: FailureReport,
@@ -66,6 +69,7 @@ def explain_for_review(
 def _client(client: OpenAI | None) -> OpenAI:
     if client is not None:
         return client
+    load_config()
     return OpenAI()
 
 
@@ -74,13 +78,19 @@ def parse_verdict(response: str | Mapping[str, Any]) -> Diagnosis:
     payload: Any = json.loads(response) if isinstance(response, str) else response
     if not isinstance(payload, Mapping):
         raise ValueError("LLM verdict must be a JSON object")
+    required_fields = {"cause", "confidence", "evidence", "suspect_lines"}
+    if set(payload) != required_fields:
+        raise ValueError("LLM verdict has an invalid schema")
     try:
         cause = Cause(payload["cause"])
-        confidence = float(payload["confidence"])
+        raw_confidence = payload["confidence"]
         evidence = payload["evidence"]
         suspect_lines = payload["suspect_lines"]
     except (KeyError, TypeError, ValueError) as error:
         raise ValueError("LLM verdict has an invalid schema") from error
+    if not isinstance(raw_confidence, int | float) or isinstance(raw_confidence, bool):
+        raise ValueError("LLM verdict has an invalid schema")
+    confidence = float(raw_confidence)
     if cause is Cause.UNKNOWN or not 0.0 <= confidence <= 1.0:
         raise ValueError("LLM verdict must name a known cause and valid confidence")
     if not isinstance(evidence, list) or not all(
@@ -88,7 +98,8 @@ def parse_verdict(response: str | Mapping[str, Any]) -> Diagnosis:
     ):
         raise ValueError("LLM evidence must be a list of strings")
     if not isinstance(suspect_lines, list) or not all(
-        isinstance(line, int) and line > 0 for line in suspect_lines
+        isinstance(line, int) and not isinstance(line, bool) and line > 0
+        for line in suspect_lines
     ):
         raise ValueError("LLM suspect_lines must contain positive integers")
     return Diagnosis(cause, confidence, evidence, suspect_lines)
