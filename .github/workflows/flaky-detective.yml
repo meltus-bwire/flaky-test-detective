@@ -23,7 +23,7 @@ jobs:
           enable-cache: true
           python-version: "3.14"
       - run: uv sync --frozen
-      - run: uv run detective run --repo "${{ github.repository }}" --no-pr
+      - run: uv run detective run --repo "${{ github.repository }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
