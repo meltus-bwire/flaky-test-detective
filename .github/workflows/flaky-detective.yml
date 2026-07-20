@@ -23,10 +23,7 @@ jobs:
           enable-cache: true
           python-version: "3.14"
       - run: uv sync --frozen
-      - run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-      - run: uv run detective run --repo "${{ github.repository }}"
+      - run: uv run detective run --repo "${{ github.repository }}" --no-pr
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
