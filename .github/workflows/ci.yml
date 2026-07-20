@@ -21,3 +21,9 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run ty check src/
       - run: uv run pytest -q
+      - name: Demonstrate the planted shared-state flake
+        run: >-
+          uv run pytest
+          fixtures/flaky-repo/test_shared.py::test_b_adds_a_shared_item
+          fixtures/flaky-repo/test_shared.py::test_a_starts_with_no_shared_items
+          -q
