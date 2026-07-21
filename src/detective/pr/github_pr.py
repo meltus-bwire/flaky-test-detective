@@ -36,7 +36,18 @@ def open_pr(
     )
     _git(repo_path, ["switch", "-c", branch])
     _git(repo_path, ["apply", "--index"], proposal.diff)
-    _git(repo_path, ["commit", "-m", message])
+    _git(
+        repo_path,
+        [
+            "-c",
+            "user.email=flaky-test-detective@users.noreply.github.com",
+            "-c",
+            "user.name=Flaky Test Detective",
+            "commit",
+            "-m",
+            message,
+        ],
+    )
     remote = f"https://x-access-token:{token}@github.com/{owner}/{name}.git"
     _git(repo_path, ["push", remote, f"{branch}:{branch}"])
 
