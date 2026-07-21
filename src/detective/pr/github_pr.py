@@ -37,7 +37,8 @@ def open_pr(
     _git(repo_path, ["switch", "-c", branch])
     _git(repo_path, ["apply", "--index"], proposal.diff)
     _git(repo_path, ["commit", "-m", message])
-    _git(repo_path, ["push", "--set-upstream", "origin", branch])
+    remote = f"https://x-access-token:{token}@github.com/{owner}/{name}.git"
+    _git(repo_path, ["push", remote, f"{branch}:{branch}"])
 
     body = render_pr_body(report, repro, diagnosis, proposal, reviewer_explanation)
     headers = {
