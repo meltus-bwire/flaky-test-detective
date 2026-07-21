@@ -23,8 +23,7 @@ jobs:
       - run: uv run pytest -q
       - name: Demonstrate the planted shared-state flake
         run: >-
-          uv run pytest
+          uv run pytest -p no:randomly
           fixtures/flaky-repo/test_shared.py::test_b_adds_a_shared_item
           fixtures/flaky-repo/test_shared.py::test_a_starts_with_no_shared_items
-          -p no:randomly
           -q
