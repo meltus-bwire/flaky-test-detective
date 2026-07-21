@@ -13,9 +13,11 @@ def test_stage_command_reports_stub(
     assert main([command]) == 0
     assert capsys.readouterr().out == f"{command} is not implemented yet.\n"
 
-def test_cli_requires_subcommand()->None:
-    with pytest.raises(SystemExit, match='2'):
+
+def test_cli_requires_a_subcommand() -> None:
+    with pytest.raises(SystemExit, match="2"):
         main([])
+
 
 def test_run_shared_fixture_prints_before_and_after_rates(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
